@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import java.lang.NumberFormatException
 
 class MainActivity : AppCompatActivity() {
     private lateinit var result: EditText
@@ -15,7 +16,6 @@ class MainActivity : AppCompatActivity() {
 
     // Variables to hold the operands and type of calculation
     private var operand1: Double? = null
-    private var operand2: Double = 0.0
     private var pendingOperation = "="
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,10 +64,14 @@ class MainActivity : AppCompatActivity() {
 
         val opListener = View.OnClickListener { v ->
             val op = (v as Button).text.toString()
-            val value = newNumber.text.toString()
-            if (value.isNotEmpty())
+            try
             {
+                val value = newNumber.text.toString().toDouble()
                 performOperation(value, op)
+            }
+            catch (e: NumberFormatException)
+            {
+                newNumber.setText("")
             }
             pendingOperation = op
             displayOperation.text = pendingOperation
@@ -81,8 +85,35 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    //Dummy function
-    private fun performOperation(value: String, operation: String) {
-        displayOperation.text = operation
+    private fun performOperation(value: Double, operation: String)
+    {
+        if (operand1 == null)
+        {
+            operand1 = value
+        }
+        else
+        {
+
+            if (pendingOperation == "=") // This usage of == does not work in Java
+            {
+                pendingOperation = operation
+            }
+
+            when (pendingOperation)
+            {
+                "=" -> operand1 = value
+                "/" -> operand1 = if (value == 0.0) {
+                    Double.NaN // handle attempt to divide by zero
+                } else {
+                    operand1!! / value // Bang Bang !! Returns a non nullable value on operand1.
+                }
+                "*" -> operand1 = operand1!! * value
+                "-" -> operand1 = operand1!! - value
+                "+" -> operand1 = operand1!! + value
+            }
+        }
+        result.setText(operand1.toString())
+        newNumber.setText("")
+
     }
 }
